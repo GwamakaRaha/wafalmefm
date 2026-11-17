@@ -1,0 +1,262 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 0. Default Deny Global Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true ||
+        request.auth.token.firebase.sign_in_provider == 'password'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'makajoseph97@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function getStaffRecord() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data;
+    }
+
+    function isStaffMember() {
+      return isBootstrapAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
+        getStaffRecord().isActive == true
+      );
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || (
+        isStaffMember() &&
+        getStaffRecord().role in ['Super Admin', 'Admin']
+      );
+    }
+
+    function isSuperAdmin() {
+      return isBootstrapAdmin() || (
+        isStaffMember() &&
+        getStaffRecord().role == 'Super Admin'
+      );
+    }
+
+    function isAccountant() {
+      return isAdmin() || (
+        isStaffMember() &&
+        getStaffRecord().role == 'Accountant'
+      );
+    }
+
+    function isTrafficManager() {
+      return isAdmin() || (
+        isStaffMember() &&
+        getStaffRecord().role == 'Traffic / Programming Manager'
+      );
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidStaff(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.fullName is string && data.fullName.size() <= 100 &&
+             data.role in ['Super Admin', 'Admin', 'Sales Agent', 'Accountant', 'Traffic / Programming Manager', 'Presenter / Operator'] &&
+             data.isActive is bool;
+    }
+
+    function isValidClient(data) {
+      return data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 120 &&
+             data.contactPerson is string && data.contactPerson.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.status in ['active', 'inactive', 'prospect'];
+    }
+
+    function isValidPackage(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.priceTZS is number && data.priceTZS >= 0 &&
+             data.spotCount is number && data.spotCount > 0 &&
+             data.durationSeconds is number && data.durationSeconds > 0 &&
+             data.isActive is bool;
+    }
+
+    function isValidCampaign(data) {
+      return data.clientId is string && data.clientId.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+             data.totalSpotsBooked is number && data.totalSpotsBooked >= 0 &&
+             data.totalAmountTZS is number && data.totalAmountTZS >= 0 &&
+             data.status in ['draft', 'pending_approval', 'active', 'completed', 'cancelled', 'paused'];
+    }
+
+    function isValidPayment(data) {
+      return data.campaignId is string && data.campaignId.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.amountTZS is number && data.amountTZS > 0 &&
+             data.paymentMethod in ['Bank Transfer', 'Cheque', 'M-Pesa', 'Tigo Pesa', 'Airtel Money', 'Cash'] &&
+             data.status in ['verified', 'pending_clearance', 'rejected'];
+    }
+
+    function isValidAdvertisement(data) {
+      return data.campaignId is string && data.campaignId.size() <= 128 &&
+             data.title is string && data.title.size() <= 120 &&
+             data.durationSeconds is number && data.durationSeconds > 0 &&
+             data.approvalStatus in ['pending', 'approved', 'rejected'];
+    }
+
+    function isValidBroadcastSchedule(data) {
+      return data.campaignId is string && data.campaignId.size() <= 128 &&
+             data.showName is string && data.showName.size() <= 100 &&
+             data.status in ['scheduled', 'aired', 'missed', 'cancelled'];
+    }
+
+    function isValidBroadcastLog(data) {
+      return data.campaignId is string && data.campaignId.size() <= 128 &&
+             data.presenterUid is string && data.presenterUid.size() <= 128 &&
+             data.verified is bool;
+    }
+
+    function isValidSmsLog(data) {
+      return data.recipientPhone is string && data.recipientPhone.size() <= 30 &&
+             data.messageBody is string && data.messageBody.size() <= 500 &&
+             data.dispatchStatus in ['queued', 'sent', 'delivered', 'failed'];
+    }
+
+    function isValidExpense(data) {
+      return data.category is string && data.category.size() <= 60 &&
+             data.description is string && data.description.size() <= 200 &&
+             data.amountTZS is number && data.amountTZS > 0;
+    }
+
+    function isValidAuditLog(data) {
+      return data.performedByUid is string && data.performedByUid.size() <= 128 &&
+             data.action is string && data.action.size() <= 80 &&
+             data.targetCollection is string && data.targetCollection.size() <= 50;
+    }
+
+    function isValidSystemSettings(data) {
+      return data.stationName is string && data.stationName.size() <= 100 &&
+             data.currency is string && data.currency.size() <= 10 &&
+             data.timezone is string && data.timezone.size() <= 50;
+    }
+
+    // --- Connectivity Test Path ---
+    match /test/{testId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // --- 1. Staff Collection ---
+    match /staff/{staffId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(staffId) && (isAdmin() || (isSignedIn() && request.auth.uid == staffId && incoming().role == 'Sales Agent')) && isValidStaff(incoming());
+      allow update: if isValidId(staffId) && isAdmin() && isValidStaff(incoming());
+      allow delete: if isValidId(staffId) && isSuperAdmin();
+    }
+
+    // --- 2. Clients Collection ---
+    match /clients/{clientId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(clientId) && isStaffMember() && isValidClient(incoming());
+      allow update: if isValidId(clientId) && isStaffMember() && isValidClient(incoming());
+      allow delete: if isValidId(clientId) && isAdmin();
+    }
+
+    // --- 3. Packages Collection ---
+    match /packages/{packageId} {
+      allow get, list: if isStaffMember();
+      allow create, update: if isValidId(packageId) && isAdmin() && isValidPackage(incoming());
+      allow delete: if isValidId(packageId) && isSuperAdmin();
+    }
+
+    // --- 4. Campaigns Collection ---
+    match /campaigns/{campaignId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(campaignId) && isStaffMember() && isValidCampaign(incoming());
+      allow update: if isValidId(campaignId) && isStaffMember() && isValidCampaign(incoming()) && incoming().clientId == existing().clientId;
+      allow delete: if isValidId(campaignId) && isAdmin();
+    }
+
+    // --- 5. Payments Collection ---
+    match /payments/{paymentId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(paymentId) && (isAccountant() || isAdmin()) && isValidPayment(incoming());
+      allow update: if isValidId(paymentId) && (isAccountant() || isAdmin()) && isValidPayment(incoming());
+      allow delete: if isValidId(paymentId) && isSuperAdmin();
+    }
+
+    // --- 6. Advertisements Collection ---
+    match /advertisements/{advertisementId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(advertisementId) && isStaffMember() && isValidAdvertisement(incoming());
+      allow update: if isValidId(advertisementId) && isStaffMember() && isValidAdvertisement(incoming());
+      allow delete: if isValidId(advertisementId) && isAdmin();
+    }
+
+    // --- 7. Broadcast Schedules Collection ---
+    match /broadcastSchedules/{scheduleId} {
+      allow get, list: if isStaffMember();
+      allow create, update: if isValidId(scheduleId) && (isTrafficManager() || isAdmin()) && isValidBroadcastSchedule(incoming());
+      allow delete: if isValidId(scheduleId) && isAdmin();
+    }
+
+    // --- 8. Broadcast Logs Collection (Confirmed Airings) ---
+    match /broadcastLogs/{logId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(logId) && isStaffMember() && isValidBroadcastLog(incoming());
+      allow update: if isValidId(logId) && isAdmin() && isValidBroadcastLog(incoming());
+      allow delete: if false; // Broadcast logs are permanent records
+    }
+
+    // --- 9. SMS Logs Collection ---
+    match /smsLogs/{smsId} {
+      allow get, list: if isStaffMember();
+      allow create: if isValidId(smsId) && isStaffMember() && isValidSmsLog(incoming());
+      allow update: if isValidId(smsId) && isAdmin() && isValidSmsLog(incoming());
+      allow delete: if false;
+    }
+
+    // --- 10. Expenses Collection ---
+    match /expenses/{expenseId} {
+      allow get, list: if isAccountant() || isAdmin();
+      allow create: if isValidId(expenseId) && (isAccountant() || isAdmin()) && isValidExpense(incoming());
+      allow update: if isValidId(expenseId) && (isAccountant() || isAdmin()) && isValidExpense(incoming());
+      allow delete: if isValidId(expenseId) && isSuperAdmin();
+    }
+
+    // --- 11. Audit Logs Collection (Immutable) ---
+    match /auditLogs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(logId) && isStaffMember() && isValidAuditLog(incoming());
+      allow update, delete: if false; // Strictly append-only
+    }
+
+    // --- 12. System Settings Collection ---
+    match /systemSettings/{settingId} {
+      allow get, list: if isStaffMember();
+      allow create, update: if isValidId(settingId) && isAdmin() && isValidSystemSettings(incoming());
+      allow delete: if false;
+    }
+  }
+}

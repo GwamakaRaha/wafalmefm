@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --wafalme-navy-dark: #07182B;
+    --wafalme-navy: #102A43;
+    --wafalme-orange: #F58220;
+    --wafalme-bg: #F5F7FA;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #F5F7FA;
+    color: #102A43;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-mono-numbers {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}

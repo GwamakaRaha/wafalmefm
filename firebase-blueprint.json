@@ -1,0 +1,285 @@
+{
+  "entities": {
+    "staff": {
+      "title": "Staff Member",
+      "description": "Internal station personnel profile with role-based access control.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 150 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "Super Admin",
+            "Admin",
+            "Sales Agent",
+            "Accountant",
+            "Traffic / Programming Manager",
+            "Presenter / Operator"
+          ]
+        },
+        "department": { "type": "string", "maxLength": 50 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "fullName", "role", "isActive"]
+    },
+    "client": {
+      "title": "Advertising Client",
+      "description": "Advertiser, enterprise brand, or agency account. A client can have multiple independent campaigns.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "companyName": { "type": "string", "maxLength": 120 },
+        "contactPerson": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "tinNumber": { "type": "string", "maxLength": 30 },
+        "vrnNumber": { "type": "string", "maxLength": 30 },
+        "industry": { "type": "string", "maxLength": 60 },
+        "assignedSalesAgentId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["active", "inactive", "prospect"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyName", "contactPerson", "phone", "status"]
+    },
+    "package": {
+      "title": "Advertising Package",
+      "description": "Commercial rate card package (e.g. Morning Prime Spot, Sponsorship, Live Mention).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "priceTZS": { "type": "number" },
+        "spotCount": { "type": "number" },
+        "durationSeconds": { "type": "number" },
+        "timeSlot": { "type": "string", "maxLength": 50 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "priceTZS", "spotCount", "durationSeconds", "isActive"]
+    },
+    "campaign": {
+      "title": "Advertising Campaign",
+      "description": "An independent commercial advertising contract belonging to a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "campaignCode": { "type": "string", "maxLength": 50 },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "clientName": { "type": "string", "maxLength": 120 },
+        "title": { "type": "string", "maxLength": 120 },
+        "packageId": { "type": "string", "maxLength": 128 },
+        "salesAgentId": { "type": "string", "maxLength": 128 },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "totalSpotsBooked": { "type": "number" },
+        "totalSpotsAired": { "type": "number" },
+        "totalAmountTZS": { "type": "number" },
+        "paidAmountTZS": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "pending_approval", "active", "completed", "cancelled", "paused"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "title", "totalSpotsBooked", "totalAmountTZS", "status"]
+    },
+    "payment": {
+      "title": "Payment Record",
+      "description": "Financial ledger record of payments received in Tanzanian Shillings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "receiptNumber": { "type": "string", "maxLength": 50 },
+        "campaignId": { "type": "string", "maxLength": 128 },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "amountTZS": { "type": "number" },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["Bank Transfer", "Cheque", "M-Pesa", "Tigo Pesa", "Airtel Money", "Cash"]
+        },
+        "referenceNumber": { "type": "string", "maxLength": 80 },
+        "recordedByUid": { "type": "string", "maxLength": 128 },
+        "paymentDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["verified", "pending_clearance", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["campaignId", "clientId", "amountTZS", "paymentMethod", "status"]
+    },
+    "advertisement": {
+      "title": "Advertisement Asset",
+      "description": "Audio creative material, jingle, script, or promo audio asset stored for broadcasting.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "campaignId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 120 },
+        "audioUrl": { "type": "string", "maxLength": 500 },
+        "durationSeconds": { "type": "number" },
+        "language": { "type": "string", "maxLength": 30 },
+        "approvalStatus": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "approvedByUid": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["campaignId", "title", "durationSeconds", "approvalStatus"]
+    },
+    "broadcastSchedule": {
+      "title": "Broadcast Schedule",
+      "description": "Planned radio airing slot for an advertisement.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "campaignId": { "type": "string", "maxLength": 128 },
+        "advertisementId": { "type": "string", "maxLength": 128 },
+        "scheduledTime": { "type": "string", "format": "date-time" },
+        "showName": { "type": "string", "maxLength": 100 },
+        "timeSlot": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["scheduled", "aired", "missed", "cancelled"] },
+        "assignedPresenterUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["campaignId", "scheduledTime", "showName", "status"]
+    },
+    "broadcastLog": {
+      "title": "Broadcast Log",
+      "description": "Confirmed as-run broadcast log confirming spot was transmitted on air.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "scheduleId": { "type": "string", "maxLength": 128 },
+        "campaignId": { "type": "string", "maxLength": 128 },
+        "airedAt": { "type": "string", "format": "date-time" },
+        "presenterUid": { "type": "string", "maxLength": 128 },
+        "presenterName": { "type": "string", "maxLength": 100 },
+        "verified": { "type": "boolean" },
+        "transmissionNotes": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["campaignId", "airedAt", "presenterUid", "verified"]
+    },
+    "smsLog": {
+      "title": "SMS Log",
+      "description": "Log of Swahili notification messages dispatched to clients regarding broadcasts or payments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "recipientPhone": { "type": "string", "maxLength": 30 },
+        "messageBody": { "type": "string", "maxLength": 500 },
+        "templateType": { "type": "string", "enum": ["broadcast_confirmation", "payment_receipt", "campaign_expiry", "custom"] },
+        "dispatchStatus": { "type": "string", "enum": ["queued", "sent", "delivered", "failed"] },
+        "dispatchedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientPhone", "messageBody", "dispatchStatus"]
+    },
+    "expense": {
+      "title": "Station Operating Expense",
+      "description": "Operating expenditure ledger entry for station management.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 200 },
+        "amountTZS": { "type": "number" },
+        "expenseDate": { "type": "string", "format": "date-time" },
+        "approvedByUid": { "type": "string", "maxLength": 128 },
+        "receiptUrl": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "description", "amountTZS"]
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "description": "Immutable chronological trail of security-sensitive and operational actions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "performedByUid": { "type": "string", "maxLength": 128 },
+        "performedByEmail": { "type": "string", "maxLength": 150 },
+        "action": { "type": "string", "maxLength": 80 },
+        "targetCollection": { "type": "string", "maxLength": 50 },
+        "targetDocumentId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["performedByUid", "action", "targetCollection"]
+    },
+    "systemSettings": {
+      "title": "System Settings",
+      "description": "Wafalme FM station operational configuration, rate cards, and financial rules.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "stationName": { "type": "string", "maxLength": 100 },
+        "tagline": { "type": "string", "maxLength": 120 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "timezone": { "type": "string", "maxLength": 50 },
+        "vatRatePercentage": { "type": "number" },
+        "frequencies": { "type": "string", "maxLength": 200 },
+        "swahiliSmsEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["stationName", "currency", "timezone"]
+    }
+  },
+  "firestore": {
+    "/staff/{staffId}": {
+      "schema": { "$ref": "#/entities/staff" },
+      "description": "Internal staff user accounts with role authorization."
+    },
+    "/clients/{clientId}": {
+      "schema": { "$ref": "#/entities/client" },
+      "description": "Advertiser and client directory records."
+    },
+    "/packages/{packageId}": {
+      "schema": { "$ref": "#/entities/package" },
+      "description": "Station commercial advertising rate packages."
+    },
+    "/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/campaign" },
+      "description": "Independent advertising campaigns belonging to clients."
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/payment" },
+      "description": "Commercial payments and invoice receipts."
+    },
+    "/advertisements/{advertisementId}": {
+      "schema": { "$ref": "#/entities/advertisement" },
+      "description": "Audio creatives and commercial scripts."
+    },
+    "/broadcastSchedules/{scheduleId}": {
+      "schema": { "$ref": "#/entities/broadcastSchedule" },
+      "description": "Radio transmission schedules and logs."
+    },
+    "/broadcastLogs/{logId}": {
+      "schema": { "$ref": "#/entities/broadcastLog" },
+      "description": "Verified on-air playback confirmations."
+    },
+    "/smsLogs/{smsId}": {
+      "schema": { "$ref": "#/entities/smsLog" },
+      "description": "Swahili client notification delivery logs."
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/expense" },
+      "description": "Radio station operational expenses."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/auditLog" },
+      "description": "Security and administrative audit logs."
+    },
+    "/systemSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/systemSettings" },
+      "description": "Station global configurations and rate card rules."
+    }
+  }
+}

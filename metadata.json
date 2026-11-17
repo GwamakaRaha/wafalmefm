@@ -1,0 +1,6 @@
+{
+  "name": "Wafalme FM – Advertising Management System",
+  "description": "Internal advertising operations, CRM, broadcast tracking, and financial management platform for Wafalme FM radio station.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
